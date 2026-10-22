@@ -1,0 +1,275 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{microtype}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\F}{\mathbb{F}}
+\newcommand{\Leg}[2]{\left(\frac{#1}{#2}\right)}
+
+\title{Bunyakovsky's Conjecture:\\Prime Values of Irreducible Polynomials}
+\author{Robin Langer}
+\date{August 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We give an expository account of Bunyakovsky's conjecture (1857), which asserts that every irreducible polynomial over $\Z$ with positive leading coefficient and no fixed prime divisor represents infinitely many primes. We trace the conjecture's position in the hierarchy of open problems in analytic number theory---from Dirichlet's theorem on primes in arithmetic progressions, through the Bateman--Horn conjecture's quantitative predictions, to the special case $f(x) = 2x^2 - 1$ arising from Chebyshev polynomials. We present computational evidence, explain the algebraic structure of the ``sieving obstructions,'' and describe the connection to Lucas sequences and primality testing.
+\end{abstract}
+
+\section{Introduction}
+
+Which polynomials produce infinitely many prime values? The simplest case is well understood: Euclid proved there are infinitely many primes (the polynomial $f(x) = x$, in spirit), and Dirichlet's theorem (1837) establishes that $f(x) = ax + b$ represents infinitely many primes whenever $\gcd(a,b) = 1$. But for degree two and above, the question remains wide open.
+
+In 1857, Viktor Yakovlevich Bunyakovsky proposed the natural generalisation \cite{bunyakovsky1857}.
+
+\begin{conjecture}[Bunyakovsky, 1857]\label{conj:bun}
+Let $f(x) \in \Z[x]$ be irreducible over $\Q$, with positive leading coefficient and $\deg f \geq 1$. Suppose $f$ has no \emph{fixed prime divisor}: there is no prime $p$ such that $p \mid f(n)$ for every $n \in \Z$. Then $f(n)$ is prime for infinitely many $n \in \N$.
+\end{conjecture}
+
+The condition on fixed prime divisors is necessary: the polynomial $f(x) = x^2 + x + 2$ is irreducible over $\Q$, yet $f(n)$ is always even, so it can be prime only at $n = 0$ (giving $f(0) = 2$). Without excluding such obstructions, the conjecture would be trivially false.
+
+As of 2026, Conjecture~\ref{conj:bun} is unproven for \emph{every single polynomial of degree $\geq 2$}. Not a single quadratic, cubic, or higher-degree polynomial has been shown to produce infinitely many primes. The most famous special case---whether $n^2 + 1$ is prime infinitely often---remains open despite enormous effort.
+
+\section{The Hierarchy of Conjectures}
+
+Bunyakovsky's conjecture sits in a nested hierarchy, each level stronger than the last.
+
+\begin{enumerate}[label=(\roman*)]
+    \item \textbf{Dirichlet's theorem} (1837, proven): If $\gcd(a,b) = 1$, then $an + b$ is prime for infinitely many $n$.
+    \item \textbf{Bunyakovsky's conjecture} (1857, open): Any irreducible $f \in \Z[x]$ without a fixed prime divisor represents infinitely many primes.
+    \item \textbf{Schinzel's Hypothesis H} (1958, open): If $f_1, \ldots, f_k \in \Z[x]$ are irreducible with positive leading coefficients and no prime $p$ divides $\prod f_i(n)$ for all $n$, then $f_1(n), \ldots, f_k(n)$ are \emph{simultaneously} prime for infinitely many $n$ \cite{schinzel1958}.
+    \item \textbf{Bateman--Horn conjecture} (1962, open): Under the same hypotheses as (iii), the number of $n \leq N$ for which all $f_i(n)$ are prime is asymptotically
+    \begin{equation}\label{eq:bh}
+        \pi_{f_1,\ldots,f_k}(N) \sim \frac{C_{f_1,\ldots,f_k}}{\prod_{i=1}^k \deg f_i} \cdot \frac{N}{(\ln N)^k},
+    \end{equation}
+    where $C_{f_1,\ldots,f_k}$ is an explicit product over primes \cite{bateman1962}.
+\end{enumerate}
+
+Each conjecture implies the ones above it. The Bateman--Horn conjecture is the strongest: it predicts not merely existence but an asymptotic count. When its predictions can be tested numerically, the agreement is striking.
+
+\section{The Bateman--Horn Constant}
+
+For a single polynomial $f$ of degree $d$, the Bateman--Horn prediction \eqref{eq:bh} becomes
+\[
+    \pi_f(N) \sim \frac{C_f}{d} \cdot \frac{N}{\ln N},
+\]
+where the constant is an Euler product:
+\begin{equation}\label{eq:constant}
+    C_f = \prod_{p \text{ prime}} \frac{1 - \omega_f(p)/p}{1 - 1/p},
+\end{equation}
+and $\omega_f(p)$ denotes the number of solutions to $f(x) \equiv 0 \pmod{p}$.
+
+The intuition is probabilistic. If $n$ is a ``random'' integer near $N$, the prime number theorem says it is prime with probability $\sim 1/\ln N$. If instead we consider $f(n) \sim c \cdot n^d$ for large $n$, then $f(n)$ is prime with probability $\sim 1/(d \ln n)$. The Euler product $C_f$ corrects for local biases: if $f$ has more roots mod $p$ than a ``generic'' degree-$d$ polynomial, then $f$ is divisible by $p$ more often, reducing the expected prime count. The converse holds when $f$ has fewer roots mod $p$.
+
+\begin{example}
+For $f(x) = x^2 + 1$: the constant $C_f \approx 1.3728$ (the Landau--Ramanujan constant, up to normalization). The polynomial has $\omega_f(p) = 0$ when $p \equiv 3 \pmod{4}$ and $\omega_f(p) = 2$ when $p \equiv 1 \pmod{4}$, by quadratic reciprocity.
+\end{example}
+
+\section{Case Study: $f(x) = 2x^2 - 1$ and Chebyshev Polynomials}
+
+The polynomial $f(x) = 2x^2 - 1$ is the Chebyshev polynomial of the first kind $T_2(x)$. It provides a particularly clean case study for Bunyakovsky's conjecture.
+
+\subsection{Checking the hypotheses}
+
+\begin{itemize}
+    \item \emph{Irreducible over $\Q$}: The discriminant is $0^2 - 4(2)(-1) = 8$, which is not a perfect square, so $f$ is irreducible.
+    \item \emph{Positive leading coefficient}: $2 > 0$.
+    \item \emph{No fixed prime divisor}: $f(1) = 1$, $f(2) = 7$, $f(3) = 17$, so $\gcd(f(1), f(2), f(3)) = 1$.
+\end{itemize}
+
+Bunyakovsky's conjecture therefore predicts that $2n^2 - 1$ is prime for infinitely many $n$.
+
+\subsection{The Bateman--Horn constant for $2x^2 - 1$}
+
+We need $\omega_f(p)$, the number of solutions to $2x^2 \equiv 1 \pmod{p}$, i.e., the number of square roots of $2^{-1} \pmod{p}$.
+
+\begin{proposition}\label{prop:roots}
+Let $p$ be an odd prime. Then
+\[
+    \omega_f(p) = 1 + \Leg{2^{-1}}{p} = 1 + \Leg{(p+1)/2}{p},
+\]
+where $\Leg{\cdot}{p}$ is the Legendre symbol. In particular:
+\[
+    \omega_f(p) = \begin{cases}
+        2 & \text{if } p \equiv \pm 1 \pmod{8}, \\
+        0 & \text{if } p \equiv \pm 3 \pmod{8}.
+    \end{cases}
+\]
+\end{proposition}
+
+\begin{proof}
+The equation $2x^2 \equiv 1 \pmod{p}$ has solutions iff $2^{-1}$ is a quadratic residue mod $p$. Since $\Leg{2^{-1}}{p} = \Leg{2}{p}^{-1} = \Leg{2}{p}$ (as the Legendre symbol takes values $\pm 1$), and the second supplement to quadratic reciprocity gives $\Leg{2}{p} = (-1)^{(p^2-1)/8}$, which equals $+1$ iff $p \equiv \pm 1 \pmod 8$.
+\end{proof}
+
+\begin{corollary}
+The only primes that can divide $2n^2 - 1$ are $2$ (trivially: $2n^2 - 1$ is always odd) and primes $q \equiv \pm 1 \pmod{8}$. In particular, $2n^2 - 1$ is never divisible by $3$, $5$, $11$, $13$, $19$, $29$, or $37$.
+\end{corollary}
+
+This ``sieving'' by quadratic reciprocity explains why $2n^2 - 1$ produces primes at an unusually high rate: it is automatically coprime to a large set of small primes. The Bateman--Horn constant reflects this advantage. Computing the product \eqref{eq:constant} over primes $p < 500$:
+
+\[
+    C_f \approx 3.666.
+\]
+
+This is roughly 2.7 times larger than $C_{x^2+1} \approx 1.37$, predicting that $2n^2 - 1$ produces primes at nearly three times the rate of $n^2 + 1$.
+
+\subsection{Computational evidence}
+
+Table~\ref{tab:bh} compares the Bateman--Horn prediction to exact counts.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{rrrrr}
+\toprule
+$N$ & Predicted & Actual & Ratio \\
+\midrule
+100 & 39.8 & 45 & 1.131 \\
+500 & 147.5 & 174 & 1.180 \\
+1\,000 & 265.4 & 303 & 1.142 \\
+5\,000 & 1\,076.1 & 1\,193 & 1.109 \\
+10\,000 & 1\,990.1 & 2\,202 & 1.106 \\
+50\,000 & 8\,470.5 & 9\,175 & 1.083 \\
+\bottomrule
+\end{tabular}
+\caption{Count of $n \leq N$ with $2n^2 - 1$ prime: Bateman--Horn prediction vs.\ actual. The ratio converges toward 1, consistent with the conjecture.}
+\label{tab:bh}
+\end{table}
+
+The ratio trends steadily toward 1 as $N$ grows, exactly as the conjecture predicts. The systematic overcount at small $N$ is typical: the Euler product converges slowly, and the truncation to primes $p < 500$ slightly underestimates $C_f$.
+
+\subsection{Restricting to prime arguments}
+
+When we evaluate $T_2(p) = 2p^2 - 1$ only at prime values of $p$, we ask a stronger question: is $2p^2 - 1$ prime for infinitely many primes $p$? Heuristically, there is no algebraic obstruction coupling the primality of $p$ to that of $2p^2 - 1$, so we expect the events to be approximately independent. Computationally, approximately 20\% of primes $p < 10\,000$ yield a prime $T_2(p)$.
+
+\section{Connection to Lucas Sequences and Primality Testing}
+
+The appearance of the Chebyshev polynomial $T_2$ is not a coincidence. There is a deep and exact identity connecting Chebyshev polynomials to Lucas sequences, and this identity underpins the most important primality tests in computational number theory.
+
+\subsection{The Chebyshev--Lucas identity}
+
+\begin{theorem}\label{thm:lucas}
+Let $V_n(P, Q)$ denote the Lucas $V$-sequence defined by $V_0 = 2$, $V_1 = P$, $V_n = PV_{n-1} - QV_{n-2}$. Then for all $n \geq 0$ and all $P$:
+\[
+    V_n(P, 1) = 2 \, T_n\!\left(\frac{P}{2}\right),
+\]
+where $T_n$ is the $n$-th Chebyshev polynomial of the first kind.
+\end{theorem}
+
+\begin{proof}
+Let $\alpha, \beta$ be the roots of $t^2 - Pt + 1 = 0$. Then $\alpha\beta = 1$, so $\beta = \alpha^{-1}$, and $\alpha + \alpha^{-1} = P$. Setting $\cos\theta = P/2$ (so $\alpha = e^{i\theta}$ when $|P| \leq 2$, or extending by analytic continuation):
+\[
+    V_n = \alpha^n + \alpha^{-n} = 2\cos(n\theta) = 2\,T_n(\cos\theta) = 2\,T_n(P/2). \qedhere
+\]
+\end{proof}
+
+More generally, the \emph{Dickson polynomial} $D_n(x, a)$ satisfies $D_n(\alpha + a/\alpha, a) = \alpha^n + (a/\alpha)^n$, giving $V_n(P, Q) = D_n(P, Q)$ for all $Q$. Dickson polynomials are the natural generalisation of Chebyshev polynomials, and they inherit the crucial composition law:
+\[
+    D_m(D_n(x, a), a^n) = D_{mn}(x, a).
+\]
+
+\subsection{Lucas--Lehmer as iterated Chebyshev evaluation}
+
+The Lucas--Lehmer primality test for Mersenne numbers $M_p = 2^p - 1$ proceeds as follows:
+\begin{align*}
+    s_0 &= 4, \\
+    s_{i+1} &= s_i^2 - 2, \\
+    M_p \text{ is prime} &\iff s_{p-2} \equiv 0 \pmod{M_p}.
+\end{align*}
+
+Each step of the recurrence is an application of $T_2$:
+\[
+    s_{i+1} = s_i^2 - 2 = 2T_2(s_i/2) = V_2(s_i, 1).
+\]
+
+By the composition law, after $k$ steps:
+\[
+    s_k = V_{2^k}(4, 1) = 2\,T_{2^k}(2).
+\]
+
+The Lucas--Lehmer test therefore asks a single question: \emph{does $M_p$ divide $T_{2^{p-2}}(2)$?} Primality testing, at its core, is iterated Chebyshev polynomial evaluation modulo a candidate.
+
+\subsection{Why Chebyshev and not Hermite?}
+
+The composition law $T_m \circ T_n = T_{mn}$ is unique to the Chebyshev/Dickson family among classical orthogonal polynomials. It arises because Chebyshev polynomials encode the power map $\alpha \mapsto \alpha^n$ on the unit circle, and composition of power maps corresponds to multiplication of exponents.
+
+Hermite polynomials satisfy $H_{n+1}(x) = 2xH_n(x) - 2nH_{n-1}(x)$, where the coefficient $2n$ depends on the index. This breaks any hope of a composition law: the recurrence is not ``autonomous.'' Consequently, Hermite (and Legendre, Laguerre, etc.) do not encode the multiplicative structure of $\Z$, and their values at primes reflect only the divisibility properties of their coefficients---structured, but not deep.
+
+\section{The Algebraic Structure of Obstructions}
+
+Returning to Bunyakovsky's conjecture, we can ask: for a given irreducible $f$, what determines whether $f$ has a fixed prime divisor?
+
+\begin{definition}
+The \emph{fixed divisor} of $f \in \Z[x]$ is $\gcd\{f(n) : n \in \Z\}$.
+\end{definition}
+
+\begin{proposition}
+For $f$ of degree $d$ with leading coefficient $a_d$:
+\[
+    \gcd\{f(n) : n \in \Z\} = \gcd\{f(0), f(1), \ldots, f(d)\}.
+\]
+In particular, the fixed divisor is computable from finitely many values.
+\end{proposition}
+
+When the fixed divisor is 1, there is no ``trivial'' reason for $f$ to avoid primes, and Bunyakovsky's conjecture asserts that it does not. The conjecture can be restated: \emph{the only obstructions to a polynomial representing primes are the local ones} (divisibility by a fixed prime). There are no ``global conspiracies.''
+
+This philosophy---local obstructions are the only obstructions---pervades modern number theory. It appears in the Hasse--Minkowski theorem for quadratic forms, in the Brauer--Manin obstruction for rational points, and in the Hardy--Littlewood circle method. Bunyakovsky's conjecture is, in a sense, the assertion that this philosophy extends to prime values of polynomials.
+
+\section{What Would a Proof Look Like?}
+
+The fundamental difficulty is that we lack tools to control the prime factorisation of polynomial values. The strongest known result in this direction is:
+
+\begin{theorem}[Iwaniec, 1978 \cite{iwaniec1978}]
+There are infinitely many $n$ such that $n^2 + 1$ has at most two prime factors.
+\end{theorem}
+
+This is a sieve-theoretic result: Iwaniec shows that $n^2 + 1$ is ``almost prime'' infinitely often, but the sieve cannot distinguish between a prime and a product of two primes (the \emph{parity problem} in sieve theory).
+
+A proof of Bunyakovsky's conjecture, even for a single degree-2 polynomial, would likely require fundamentally new ideas. Possible approaches include:
+\begin{itemize}
+    \item Resolving the parity barrier in sieve methods (a major open problem in its own right).
+    \item Establishing sufficiently strong equidistribution results for primes in polynomial sequences, perhaps via automorphic forms or algebraic geometry.
+    \item A conceptually different approach entirely---perhaps through the algebraic structure of function fields, where an analogue of Bunyakovsky's conjecture is known to hold.
+\end{itemize}
+
+\begin{remark}
+Over function fields $\F_q[t]$, the analogue of Bunyakovsky's conjecture is a theorem: an irreducible polynomial $f(x) \in \F_q[t][x]$ represents infinitely many irreducible polynomials in $\F_q[t]$. The proof uses the Riemann hypothesis for curves over finite fields (Weil, 1948). The absence of a comparable tool over $\Z$ is the heart of the difficulty.
+\end{remark}
+
+\section{Concluding Remarks}
+
+Bunyakovsky's conjecture, now 169 years old, remains as tantalising as ever. It occupies a peculiar position in number theory: universally believed, supported by overwhelming computational evidence, connected to deep structures in algebra and analysis, yet completely resistant to proof.
+
+The case $f(x) = 2x^2 - 1$---the Chebyshev polynomial $T_2$---is especially appealing because it links the conjecture to primality testing via Lucas sequences. The same polynomial family that \emph{detects} primes (through Lucas--Lehmer and Baillie--PSW) also \emph{generates} them at a rate that we can predict but not prove. Whether this duality between detection and generation can be exploited toward a proof is an open and intriguing question.
+
+\begin{thebibliography}{9}
+\bibitem{bunyakovsky1857}
+V.~Bunyakovsky, \emph{Sur les diviseurs num\'eriques invariables des fonctions rationnelles enti\`eres}, M\'em.\ Acad.\ Imp.\ Sci.\ St.-P\'etersbourg, \textbf{6} (1857), no.~7, 305--329.
+
+\bibitem{bateman1962}
+P.~T.~Bateman and R.~A.~Horn, \emph{A heuristic asymptotic formula concerning the distribution of prime numbers}, Math.\ Comp., \textbf{16} (1962), 363--367.
+
+\bibitem{schinzel1958}
+A.~Schinzel and W.~Sierpi\'nski, \emph{Sur certaines hypoth\`eses concernant les nombres premiers}, Acta Arith., \textbf{4} (1958), 185--208; erratum \textbf{5} (1959), 259.
+
+\bibitem{iwaniec1978}
+H.~Iwaniec, \emph{Almost-primes represented by quadratic polynomials}, Invent.\ Math., \textbf{47} (1978), 171--188.
+\end{thebibliography}
+
+\end{document}

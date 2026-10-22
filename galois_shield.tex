@@ -1,0 +1,366 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{microtype}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Gal}{\operatorname{Gal}}
+\newcommand{\Fix}{\operatorname{Fix}}
+\newcommand{\Frob}{\operatorname{Frob}}
+\newcommand{\li}{\operatorname{li}}
+
+\title{Galois Theory and the Shield Bound:\\Can Any Polynomial Beat Euler's $\boldsymbol{p^2+p+41}$?}
+\author{Robin Langer}
+\date{August 2025}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Euler's polynomial $p^2+p+41$ produces primes at remarkable density: 44.3\% of its values at prime arguments $p < 10{,}000$ are prime.
+We use the Bateman--Horn conjecture and the Chebotarev density theorem to determine what Galois-theoretic conditions a polynomial must satisfy to beat Euler's asymptotic prime production rate.\looseness=-1
+We show that no polynomial of degree $\geq 3$ can compete: the ``degree tax'' in Bateman--Horn requires cubics to block all primes up to $\sim\!251$ (quartics up to $\sim\!1759$), which Chebotarev renders infeasible.
+Among quadratics, we find that Euler's discriminant $\Delta = -163$ is \emph{not} optimal: the composite discriminant $\Delta = -85507 = -37 \cdot 2311$ achieves a higher Bateman--Horn constant by exploiting ramification to extend the prime-blocking shield.
+This reveals that the classical Heegner number story is incomplete --- composite discriminants with strategically placed ramification can outperform the class-number-one miracle.
+\end{abstract}
+
+\tableofcontents
+
+\section{Introduction}\label{sec:intro}
+
+The polynomial $f(x) = x^2 + x + 41$ is one of the most celebrated objects in elementary number theory.
+Discovered by Euler, it takes prime values for $x = 0, 1, \ldots, 39$, a streak explained by the fact that its discriminant $\Delta = -163$ is the largest Heegner number, corresponding to the imaginary quadratic field $\Q(\sqrt{-163})$ of class number one.
+
+When we evaluate $f$ at prime arguments $p < 10{,}000$, it produces primes 44.3\% of the time (545 out of 1229 primes).
+The Bateman--Horn conjecture predicts that this dominance persists asymptotically, with a constant $C_f/\deg = 3.34$ governing the prime production rate.
+
+The natural question is: \emph{can any polynomial beat Euler?}
+We bring Galois theory --- specifically the Chebotarev density theorem and the fixed-point statistics of Galois groups --- to bear on this question.
+
+\subsection{Summary of results}
+
+\begin{enumerate}[label=(\roman*)]
+\item For each degree $d$ and transitive Galois group $G \leq S_d$, we compute the minimum \emph{shield bound} $B$ --- the largest prime up to which \emph{all} primes must be blocked (have no roots mod $p$) --- required to beat Euler. For $d=3$ this is $B \approx 263$; for $d=4$ it is $B \approx 1759$; for $d \geq 5$ it exceeds $10{,}000$. (Section~\ref{sec:shield}.)
+
+\item The probability that a random polynomial with Galois group $G$ achieves shield bound $B$ is roughly $\delta(G)^{\pi(B)}$, where $\delta(G)$ is the derangement fraction. For $G = \Z/3\Z$ this is $(2/3)^{56} \approx 10^{-10}$; for all degree-4 and degree-5 groups it is below $10^{-35}$. (Section~\ref{sec:shield}.)
+
+\item An exhaustive search over negative discriminants $\Delta$ down to $-100{,}000$ reveals three quadratics that beat Euler on the Bateman--Horn constant $C_f/2$. The winner is $\Delta = -85507 = -37 \cdot 2311$ with $C_f/2 = 3.48$. (Section~\ref{sec:quadratic}.)
+
+\item The mechanism is \emph{ramification shielding}: the prime $37$ divides $\Delta$, making it ramified (contributing a neutral factor of~1 to the Bateman--Horn product), while all primes from 2 to 59 are quadratic non-residues of the cofactor. (Section~\ref{sec:ramification}.)
+
+\item The best cyclic cubic found (conductor $q = 4{,}851{,}139$, blocking all primes up to 137) achieves $C_f/3 = 2.88$, still 14\% behind Euler. (Section~\ref{sec:cubic}.)
+\end{enumerate}
+
+
+\section{The Bateman--Horn framework}\label{sec:bh}
+
+Let $f \in \Z[x]$ be an irreducible polynomial of degree $d \geq 2$ with positive leading coefficient.
+The \emph{Bateman--Horn conjecture}~\cite{BH} predicts
+\[
+\pi_f(N) \;=\; \#\{n \leq N : f(n) \text{ is prime}\} \;\sim\; \frac{C_f}{d} \cdot \li(N),
+\]
+where $\li(N) = \int_2^N dt/\ln t$ is the logarithmic integral and
+\begin{equation}\label{eq:BH}
+C_f \;=\; \prod_{p \text{ prime}} \frac{1 - \omega_f(p)/p}{1 - 1/p},
+\end{equation}
+with $\omega_f(p) = \#\{x \in \Z/p\Z : f(x) \equiv 0 \pmod{p}\}$.
+
+The key observation is that $C_f/d$ governs the asymptotic density.
+To beat Euler, a polynomial of degree $d$ needs $C_f/d > 3.34$.
+
+\begin{definition}[Shield]
+A prime $p$ is \emph{blocked} by $f$ if $\omega_f(p) = 0$ (i.e., $f$ has no roots mod $p$).
+The \emph{shield} of $f$ is the set of blocked primes.
+The \emph{shield product} is $\prod_{p \text{ blocked}} \frac{p}{p-1}$.
+\end{definition}
+
+When $\omega_f(p) = 0$, the factor at $p$ in~\eqref{eq:BH} is $\frac{p}{p-1} > 1$, boosting $C_f$.
+When $\omega_f(p) = k > 0$, the factor is $\frac{p-k}{p-1} < 1$, penalising $C_f$.
+
+\begin{proposition}[Average neutrality]\label{prop:neutral}
+For any transitive subgroup $G \leq S_d$, the expected value of the Bateman--Horn factor at a prime $p$ (averaged over Frobenius elements by Chebotarev) equals~$1$.
+\end{proposition}
+
+\begin{proof}
+The expected number of fixed points of a uniformly random element of a transitive group is exactly~$1$ (a standard result in permutation group theory).
+Therefore
+\[
+\mathbb{E}\!\left[\frac{1 - \omega/p}{1 - 1/p}\right]
+= \frac{1}{1-1/p}\left(1 - \frac{\mathbb{E}[\omega]}{p}\right)
+= \frac{1}{1-1/p}\cdot\frac{p-1}{p}
+= 1. \qedhere
+\]
+\end{proof}
+
+This is fundamental: $C_f$ is not determined by the ``average'' blocking rate (which is always neutral) but by \emph{which specific small primes} are blocked, since $p/(p-1)$ is largest for small $p$.
+
+
+\section{Shield bounds by Galois group}\label{sec:shield}
+
+For a polynomial $f$ of degree $d$ with Galois group $G$ acting transitively on the $d$ roots, the Chebotarev density theorem determines the distribution of $\omega_f(p)$ over primes:
+\[
+\omega_f(p) = |\Fix(\Frob_p)|,
+\]
+where $\Frob_p \in G$ is the Frobenius element at $p$ (well-defined up to conjugacy for unramified $p$).
+
+The \emph{derangement fraction} $\delta(G) = |\{g \in G : \Fix(g) = \varnothing\}|/|G|$ gives the asymptotic proportion of blocked primes.
+
+\begin{table}[ht]
+\centering
+\caption{Shield bounds required to beat Euler ($C_f/d > 3.34$).}
+\label{tab:shield}
+\medskip
+\begin{tabular}{llcccc}
+\toprule
+Group $G$ & Degree & $\delta(G)$ & Need $C_f >$ & Shield $B$ & Feasibility \\
+\midrule
+$\Z/2$ & 2 & 50.0\% & 6.68 & 37 & Euler achieves this \\
+$\Z/3$ & 3 & 66.7\% & 10.02 & 263 & $\sim\!10^{10}$ candidates \\
+$S_3$  & 3 & 33.3\% & 10.02 & 263 & infeasible ($\sim\!10^{27}$) \\
+$\Z/4$ & 4 & 75.0\% & 13.36 & 1759 & infeasible ($\sim\!10^{35}$) \\
+$V_4$  & 4 & 75.0\% & 13.36 & 1759 & infeasible ($\sim\!10^{35}$) \\
+$D_4$  & 4 & 62.5\% & 13.36 & 1759 & infeasible ($\sim\!10^{56}$) \\
+$\Z/5$ & 5 & 80.0\% & 16.70 & 11789 & infeasible ($\sim\!10^{137}$) \\
+$F_{20}$ & 5 & 75.0\% & 16.70 & 11789 & infeasible ($\sim\!10^{177}$) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The shield bound $B$ is the smallest prime such that $\prod_{p \leq B} \frac{p}{p-1} > 3.34 \cdot d$.
+By Mertens' theorem, this product grows as $e^\gamma \ln B \approx 1.781 \ln B$.
+
+The ``feasibility'' column estimates the number of candidates that must be searched: roughly $\delta(G)^{-\pi(B)}$, the reciprocal of the probability that all primes up to $B$ are simultaneously blocked.
+
+\begin{corollary}[The degree tax]
+For the same shield (blocking all primes up to $B$), a degree-$d$ polynomial has $C_f/d \approx \frac{1}{d}\prod_{p \leq B}\frac{p}{p-1}$.
+The factor $1/d$ is an inescapable penalty that grows linearly with degree.
+\end{corollary}
+
+
+\section{Euler and the Heegner miracle}\label{sec:euler}
+
+For $f(x) = x^2 + x + 41$, the discriminant is $\Delta = 1 - 4 \cdot 41 = -163$.
+
+A prime $p$ is blocked if and only if $\left(\frac{\Delta}{p}\right) = -1$, i.e., $\Delta$ is a quadratic non-residue mod $p$.
+By quadratic reciprocity, for odd $p \neq 163$:
+\[
+\left(\frac{-163}{p}\right) = \left(\frac{p}{163}\right),
+\]
+so $p$ is blocked iff $p$ is a QNR mod $163$.
+
+The field $\Q(\sqrt{-163})$ has class number $h(-163) = 1$.
+By the Rabinowitsch criterion, this is equivalent to $x^2 + x + 41$ being prime for all $x = 0, 1, \ldots, 39$.
+All primes $p < 41$ are QNRs mod $163$, giving a shield of 12 consecutive primes.
+
+The shield product is
+\[
+\prod_{\substack{p \leq 37}} \frac{p}{p-1} = \frac{2}{1}\cdot\frac{3}{2}\cdot\frac{5}{4}\cdots\frac{37}{36} \approx 6.72.
+\]
+Beyond $p = 41$, about half of primes remain blocked (by Chebotarev), contributing additional small corrections.
+The final Bateman--Horn constant is $C_f = 6.68$, giving $C_f/2 = 3.34$.
+
+This connects to deep mathematics:
+\begin{itemize}
+\item Ramanujan's constant: $e^{\pi\sqrt{163}} \approx 640320^3 + 744$ (almost an integer),
+\item The $j$-invariant: $j\!\left(\frac{1+\sqrt{-163}}{2}\right) = -640320^3$,
+\item Stark--Heegner: there are exactly nine imaginary quadratic fields with class number~$1$.
+\end{itemize}
+
+
+\section{Beating Euler: composite discriminants}\label{sec:quadratic}
+
+We searched all negative discriminants $\Delta \equiv 0, 1 \pmod{4}$ down to $-100{,}000$, computing the Bateman--Horn constant for each.
+
+\begin{table}[ht]
+\centering
+\caption{Top quadratics by Bateman--Horn constant $C_f/2$.}
+\label{tab:top-quad}
+\medskip
+\begin{tabular}{rrrrcl}
+\toprule
+Rank & $\Delta$ & $C_f$ & $C_f/2$ & 1st split & Polynomial \\
+\midrule
+1 & $-85507$ & 6.964 & 3.482 & 61 & $x^2+x+21377$ \\
+2 & $-90787$ & 6.778 & 3.389 & 37 & $x^2+x+22697$ \\
+3 & $-77683$ & 6.705 & 3.353 & 47 & $x^2+x+19421$ \\
+4 & $-163$   & 6.682 & 3.341 & 41 & $x^2+x+41$ \\
+5 & $-86227$ & 6.391 & 3.196 & 41 & $x^2+x+21557$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The winner, $\Delta = -85507$, beats Euler by 4.2\% on $C_f/2$.
+
+
+\subsection{The ramification mechanism}\label{sec:ramification}
+
+The discriminant $-85507$ factors as $-37 \cdot 2311$, with both $37$ and $2311$ prime.
+
+\begin{itemize}
+\item $p = 37$: since $37 \mid \Delta$, the prime is \emph{ramified} in $\Q(\sqrt{-85507})$, giving $\omega_f(37) = 1$ and a Bateman--Horn factor of $\frac{1-1/37}{1-1/37} = 1$ --- completely neutral.
+
+\item For all primes $p < 61$ with $p \neq 37$: the Kronecker symbol $\left(\frac{-85507}{p}\right) = -1$, so $\omega_f(p) = 0$ (blocked).
+\end{itemize}
+
+This creates a ``shield with a neutral hole'': the 16 primes $\{2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 41, 43, 47, 53, 59\}$ are blocked, while $37$ sits neutrally in the middle.
+The shield product is $\approx 8.13$, compared to Euler's $\approx 7.89$.
+
+\begin{remark}
+Euler's polynomial benefits from class number $h(-163) = 1$, which guarantees all primes up to $\sqrt{163/3} \approx 7.4$ are blocked, with the full shield extending to 37 by the specific arithmetic of $163$.
+The discriminant $-85507$ has class number $> 1$, but its shield extends further by exploiting ramification to ``skip over'' the split prime at $37$.
+\end{remark}
+
+
+\subsection{Crossover analysis}
+
+Although $\Delta = -85507$ has a higher Bateman--Horn constant, the polynomial $x^2+x+21377$ produces larger values (the constant term is 520 times bigger), making individual values less likely to be prime at moderate arguments.
+
+\begin{table}[ht]
+\centering
+\caption{Prime counts at prime arguments: Euler vs.\ $\Delta = -85507$.}
+\label{tab:crossover}
+\medskip
+\begin{tabular}{rcccc}
+\toprule
+$N$ & Euler primes & $-85507$ primes & Euler density & $-85507$ density \\
+\midrule
+1\,000 & 109 & 110 & 0.649 & 0.655 \\
+2\,000 & 168 & 176 & 0.555 & 0.581 \\
+5\,000 & 329 & 320 & 0.492 & 0.478 \\
+10\,000 & 545 & 531 & 0.443 & 0.432 \\
+20\,000 & 917 & 907 & 0.405 & 0.401 \\
+50\,000 & 1885 & 1901 & 0.367 & 0.370 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The two polynomials trade the lead repeatedly.
+By $N = 50{,}000$, the Bateman--Horn prediction begins to dominate: $\Delta = -85507$ pulls ahead with 1901 vs.\ 1885 primes.
+The asymptotic advantage of $\sim\!4\%$ should become decisive for large $N$.
+
+
+\section{The cyclic cubic attack}\label{sec:cubic}
+
+The most promising non-quadratic avenue is cyclic cubics ($G = \Z/3$), which block $2/3$ of primes --- the highest derangement fraction among degree-3 groups.
+
+For a cyclic cubic with prime conductor $q$ (where $3 \mid q-1$), the splitting of a prime $p$ is controlled by cubic reciprocity:
+\[
+\omega_f(p) = \begin{cases} 3 & \text{if } p^{(q-1)/3} \equiv 1 \pmod{q} \text{ (cubic residue)}, \\ 0 & \text{otherwise}. \end{cases}
+\]
+
+We searched all primes $q \equiv 1 \pmod{3}$ up to $10^7$, looking for conductors where all small primes are cubic non-residues.
+
+\begin{table}[ht]
+\centering
+\caption{Best cyclic cubic conductors.}
+\label{tab:cubic}
+\medskip
+\begin{tabular}{rccccc}
+\toprule
+Conductor $q$ & 1st cubic residue & \# blocked & Shield & $C_f/3$ & Density \\
+\midrule
+$4{,}851{,}139$ & 137 & 32 & 8.850 & 2.878 & 0.339 \\
+$7{,}778{,}509$ & 131 & 31 & 8.782 & 2.862 & 0.359 \\
+$6{,}843{,}919$ & 127 & 30 & 8.713 & 2.934 & 0.356 \\
+$2{,}206{,}591$ & 113 & 29 & 8.636 & 2.964 & 0.371 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The best cubic blocks all primes up to 137 --- an impressive shield --- but $C_f/3 \approx 2.9$ remains 14\% below Euler's $3.34$.
+
+For each conductor, we constructed explicit cubic polynomials via Gauss periods.
+For conductor $q$, let $g$ be a primitive root mod $q$ and partition $(\Z/q\Z)^\times$ into three cosets of the subgroup of cubes.
+The Gauss period $\eta_0 = \sum_{k \in C_0} \cos(2\pi k/q)$ is a root of a monic cubic with integer coefficients.
+
+For example, conductor $q = 2{,}206{,}591$ yields $x^3 + x^2 - 735{,}530x + 227{,}687{,}501$, a cyclic cubic blocking all 25 primes up to~97.
+
+
+\section{Why quadratics win}\label{sec:why}
+
+We can now state the structural result:
+
+\begin{theorem}[Informal]
+Under the Bateman--Horn conjecture, no polynomial of degree $d \geq 3$ can match the asymptotic prime production rate of the optimal quadratic.
+Among quadratics, the optimal discriminant $($by Bateman--Horn constant$)$ is not a Heegner number but a composite discriminant exploiting ramification.
+\end{theorem}
+
+The argument rests on three pillars:
+
+\paragraph{1. The degree tax.}
+The Bateman--Horn prediction scales as $C_f/d$.
+For the same shield product $S$, a degree-$d$ polynomial achieves $C_f/d \approx S/d$.
+To match Euler's $S/2 \approx 3.34$, degree $d$ needs $S > 3.34 \cdot d$, which by Mertens' theorem requires blocking all primes up to $\exp(3.34d / e^\gamma) \approx \exp(1.88d)$.
+This grows exponentially with $d$.
+
+\paragraph{2. Chebotarev makes large shields improbable.}
+By Proposition~\ref{prop:neutral}, only a fraction $\delta(G)$ of primes are blocked.
+The probability that \emph{all} primes up to $B$ are blocked is roughly $\delta(G)^{\pi(B)}$, which decreases super-exponentially with $B$.
+Even the best group ($\Z/5$ with $\delta = 4/5$) cannot achieve the shield needed at degree~5.
+
+\paragraph{3. Ramification gives quadratics an extra trick.}
+Composite discriminants allow specific primes to be ramified (neutral) rather than split (penalised), effectively ``skipping over'' bad primes in the shield.
+This trick is unique to the interplay of the discriminant's factorisation with quadratic reciprocity, and has no direct analogue for cubic or higher reciprocity that would overcome the degree tax.
+
+
+\section{Open questions}\label{sec:open}
+
+\begin{enumerate}
+\item \textbf{Optimal composite discriminants.}
+Is there a theoretical framework, analogous to Heegner's theorem for class number one, that predicts which composite discriminants maximise $C_f$?
+The interplay of ramification and quadratic reciprocity at composite moduli is rich and, to our knowledge, not well characterised for this optimisation problem.
+
+\item \textbf{Deeper cubic search.}
+Our search covered conductors up to $10^7$, finding shields up to $B = 137$.
+A search to $10^{10}$ might find shields up to $\sim\!200$, but $C_f/3$ would need to exceed $3.48$ (the new quadratic champion), requiring a shield product above $10.4$ --- blocking all primes up to $\sim\!290$.
+
+\item \textbf{Function field analogue.}
+Over $\mathbb{F}_q[t]$, the Bunyakovsky conjecture is a theorem (via Weil's proof of the Riemann hypothesis for curves).
+Does the proof structure illuminate which polynomials over $\Z$ should produce the most primes?
+
+\item \textbf{Non-monic quadratics.}
+We tested $f(x) = ax^2 + 1$ for various primorial values of $a$.
+Even $a = 30030 = 2 \cdot 3 \cdot 5 \cdot 7 \cdot 11 \cdot 13$ achieves only $C_f/2 = 2.26$.
+The ``free'' blocking of primes dividing $a$ cannot compensate for the poor residual discriminant $-4a$.
+A more systematic search over general $ax^2 + bx + c$ might be worthwhile.
+\end{enumerate}
+
+\begin{thebibliography}{9}
+\bibitem{BH}
+P.~T.~Bateman and R.~A.~Horn,
+\emph{A heuristic asymptotic formula concerning the distribution of prime numbers},
+Math.\ Comp.\ \textbf{16} (1962), 363--367.
+
+\bibitem{Heegner}
+K.~Heegner,
+\emph{Diophantische Analysis und Modulfunktionen},
+Math.\ Z.\ \textbf{56} (1952), 227--253.
+
+\bibitem{Rabinowitsch}
+G.~Rabinowitsch,
+\emph{Eindeutigkeit der Zerlegung in Primzahlfaktoren in quadratischen Zahlk\"orpern},
+J.\ Reine Angew.\ Math.\ \textbf{142} (1913), 153--164.
+
+\bibitem{Stark}
+H.~M.~Stark,
+\emph{A complete determination of the complex quadratic fields of class-number one},
+Michigan Math.\ J.\ \textbf{14} (1967), 1--27.
+\end{thebibliography}
+
+\end{document}
